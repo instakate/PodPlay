@@ -14,9 +14,15 @@ import com.raywenderlich.podplay.databinding.FragmentPodcastDetailsBinding
 import com.raywenderlich.podplay.viewmodel.PodcastViewModel
 
 class PodcastDetailsFragment : Fragment() {
-    private lateinit var databinding: FragmentPodcastDetailsBinding
     private val podcastViewModel: PodcastViewModel by activityViewModels()
+    private lateinit var databinding: FragmentPodcastDetailsBinding
     private lateinit var episodeListAdapter: EpisodeListAdapter
+
+    companion object {
+        fun newInstance(): PodcastDetailsFragment {
+            return PodcastDetailsFragment()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,7 +74,7 @@ class PodcastDetailsFragment : Fragment() {
         inflater.inflate(R.menu.menu_details, menu)
     }
 
-    private fun updateControls() {
+    /*private fun updateControls() {
         val viewData = podcastViewModel.activePodcastViewData ?:
         return
         databinding.feedTitleTextView.text = viewData.feedTitle
@@ -76,11 +82,7 @@ class PodcastDetailsFragment : Fragment() {
         activity?.let { activity ->
             Glide.with(activity).load(viewData.imageUrl).into(databinding.feedImageView)
         }
-    }
+    }*/
 
-    companion object {
-        fun newInstance(): PodcastDetailsFragment {
-            return PodcastDetailsFragment()
-        }
-    }
+
 }

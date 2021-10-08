@@ -79,6 +79,31 @@ class PodcastActivity : AppCompatActivity(),
         return true
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun createSubscription() {
+        podcastViewModel.podcastLiveData.observe(this, {
+            hideProgressBar()
+            if (it != null) {
+                showDetailsFragment()
+            } else {
+                showError("Error loading feed")
+            }
+        })
+    }
+
+    override fun onShowDetails(podcastSummaryViewData:
+                               SearchViewModel.PodcastSummaryViewData) {
+        podcastSummaryViewData.feedUrl?.let {
+            showProgressBar()
+            podcastViewModel.getPodcast(podcastSummaryViewData)
+        }
+    }
+
     private fun performSearch(term: String) {
         showProgressBar()
         GlobalScope.launch {
@@ -99,11 +124,7 @@ class PodcastActivity : AppCompatActivity(),
         }
     }
 
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        setIntent(intent)
-        handleIntent(intent)
-    }
+
 
     private fun setupToolbar() {
         setSupportActionBar(databinding.toolbar)
@@ -113,6 +134,14 @@ class PodcastActivity : AppCompatActivity(),
         val service = ItunesService.instance
         searchViewModel.iTunesRepo = ItunesRepo(service)
         podcastViewModel.podcastRepo = PodcastRepo(RssFeedService.instance)
+    }
+
+    private fun addBackStackListener() {
+        supportFragmentManager.addOnBackStackChangedListener {
+            if (supportFragmentManager.backStackEntryCount == 0) {
+                databinding.podcastRecyclerView.visibility = View.VISIBLE
+            }
+        }
     }
 
     private fun updateControls() {
@@ -128,19 +157,17 @@ class PodcastActivity : AppCompatActivity(),
         databinding.podcastRecyclerView.adapter = podcastListAdapter
     }
 
-    override fun onShowDetails(podcastSummaryViewData:
-                               SearchViewModel.PodcastSummaryViewData) {
-        podcastSummaryViewData.feedUrl?.let {
-            showProgressBar()
-            podcastViewModel.getPodcast(podcastSummaryViewData)
-        }
-    }
+    private fun showDetailsFragment() {
+        val podcastDetailsFragment = createPodcastDetailsFragment()
+        supportFragmentManager.beginTransaction()
+            .add(R.id.podcastDetailsContainer,
+            //.replace(R.id.podcastDetailsContainer,
+                podcastDetailsFragment, TAG_DETAILS_FRAGMENT)
+            .addToBackStack("DetailsFragment").commit()
 
-    private fun showProgressBar() {
-        databinding.progressBar.visibility = View.VISIBLE
-    }
-    private fun hideProgressBar() {
-        databinding.progressBar.visibility = View.INVISIBLE
+        databinding.podcastRecyclerView.visibility = View.INVISIBLE
+
+        searchMenuItem.isVisible = false
     }
 
     private fun createPodcastDetailsFragment():
@@ -154,16 +181,11 @@ class PodcastActivity : AppCompatActivity(),
         return podcastDetailsFragment
     }
 
-    private fun showDetailsFragment() {
-        val podcastDetailsFragment = createPodcastDetailsFragment()
-        supportFragmentManager.beginTransaction().add(
-            R.id.podcastDetailsContainer,
-            podcastDetailsFragment, TAG_DETAILS_FRAGMENT)
-            .addToBackStack("DetailsFragment").commit()
-
-        databinding.podcastRecyclerView.visibility = View.INVISIBLE
-
-        searchMenuItem.isVisible = false
+    private fun showProgressBar() {
+        databinding.progressBar.visibility = View.VISIBLE
+    }
+    private fun hideProgressBar() {
+        databinding.progressBar.visibility = View.INVISIBLE
     }
 
     private fun showError(message: String) {
@@ -174,24 +196,6 @@ class PodcastActivity : AppCompatActivity(),
             .show()
     }
 
-    private fun addBackStackListener() {
-        supportFragmentManager.addOnBackStackChangedListener {
-            if (supportFragmentManager.backStackEntryCount == 0) {
-                databinding.podcastRecyclerView.visibility = View.VISIBLE
-            }
-        }
-    }
-
-    private fun createSubscription() {
-        podcastViewModel.podcastLiveData.observe(this, {
-            hideProgressBar()
-            if (it != null) {
-                showDetailsFragment()
-            } else {
-                showError("Error loading feed")
-            }
-        })
-    }
 
     companion object {
         private const val TAG_DETAILS_FRAGMENT = "DetailsFragment"
